@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { FrequencyAnalyzer } from '@/components/FrequencyAnalyzer';
 import { FrequencyMeter } from '@/components/FrequencyMeter';
 import { AlertSystem } from '@/components/AlertSystem';
+import { SimulationPanel } from '@/components/SimulationPanel';
 import { useAudioAnalyzer } from '@/hooks/useAudioAnalyzer';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -105,6 +106,12 @@ const Index = () => {
             </Card>
           </div>
         </div>
+
+        {/* لوحة المحاكاة */}
+        <SimulationPanel 
+          currentFrequency={peakFrequency || 0}
+          isAnalyzing={isAnalyzing}
+        />
 
         {/* Info Panel */}
         <Card className="p-6 bg-slate-800/50 border-slate-700">
