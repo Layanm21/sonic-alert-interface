@@ -22,52 +22,61 @@ interface AudioEnvironmentSimulatorProps {
 // مكون الموجة الصوتية ثلاثية الأبعاد
 function SoundWave({ frequency, distance, environment }: { frequency: number; distance: number; environment: Environment }) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const waveGeometry = useRef<THREE.SphereGeometry>(null);
 
   useFrame((state) => {
-    if (meshRef.current && waveGeometry.current) {
+    if (meshRef.current && meshRef.current.material) {
       const time = state.clock.getElapsedTime();
-      const scale = 1 + Math.sin(time * frequency / 1000) * 0.1;
+      const scale = 1 + Math.sin(time * (frequency || 1000) / 1000) * 0.1;
       meshRef.current.scale.setScalar(scale);
       
       // تأثير البيئة على الشفافية
-      const opacity = Math.max(0.1, 1 - (distance * environment.damping));
-      (meshRef.current.material as THREE.MeshBasicMaterial).opacity = opacity;
+      const opacity = Math.max(0.1, 1 - ((distance || 1) * (environment?.damping || 0.5)));
+      if (meshRef.current.material instanceof THREE.MeshBasicMaterial) {
+        meshRef.current.material.opacity = opacity;
+      }
     }
   });
 
+  const waveColor = frequency > 20000 ? "#ef4444" : frequency > 15000 ? "#f59e0b" : "#06b6d4";
+  const radius = Math.max(0.5, distance || 1);
+
   return (
-    <Sphere ref={meshRef} args={[distance, 32, 32]} position={[0, 0, 0]}>
+    <mesh ref={meshRef} position={[0, 0, 0]}>
+      <sphereGeometry args={[radius, 16, 16]} />
       <meshBasicMaterial 
-        color={frequency > 20000 ? "#ef4444" : frequency > 15000 ? "#f59e0b" : "#06b6d4"}
-        transparent
+        color={waveColor}
+        transparent={true}
         opacity={0.3}
-        wireframe
+        wireframe={true}
       />
-    </Sphere>
+    </mesh>
   );
 }
 
 // مكون البيئة ثلاثية الأبعاد
 function EnvironmentMesh({ environment }: { environment: Environment }) {
+  if (!environment) return null;
+  
   const roomSize = environment.id === "hall" ? 8 : environment.id === "car" ? 3 : 5;
   
   return (
     <group>
       {/* جدران البيئة */}
-      <Box args={[roomSize, roomSize, roomSize]} position={[0, 0, 0]}>
+      <mesh position={[0, 0, 0]}>
+        <boxGeometry args={[roomSize, roomSize, roomSize]} />
         <meshBasicMaterial 
           color="#64748b" 
-          transparent 
+          transparent={true}
           opacity={0.1} 
-          wireframe 
+          wireframe={true}
         />
-      </Box>
+      </mesh>
       
       {/* مصدر الصوت */}
-      <Sphere args={[0.1]} position={[0, 0, 0]}>
+      <mesh position={[0, 0, 0]}>
+        <sphereGeometry args={[0.1, 8, 8]} />
         <meshBasicMaterial color="#ef4444" />
-      </Sphere>
+      </mesh>
       
       {/* تسمية البيئة */}
       <Text
@@ -75,7 +84,7 @@ function EnvironmentMesh({ environment }: { environment: Environment }) {
         fontSize={0.5}
         color="#374151"
       >
-        {environment.name}
+        {environment.name || ""}
       </Text>
     </group>
   );
@@ -112,22 +121,28 @@ export const AudioEnvironmentSimulator = ({
         <CardContent>
           {/* العرض ثلاثي الأبعاد */}
           <div className="h-64 w-full border rounded-lg overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100">
-            <Canvas camera={{ position: [5, 5, 5], fov: 50 }}>
-              <ambientLight intensity={0.5} />
-              <pointLight position={[10, 10, 10]} />
-              
-              <EnvironmentMesh environment={environment} />
-              
-              {isActive && (
-                <SoundWave 
-                  frequency={frequency} 
-                  distance={distance} 
-                  environment={environment} 
-                />
-              )}
-              
-              <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
-            </Canvas>
+            {environment ? (
+              <Canvas camera={{ position: [5, 5, 5], fov: 50 }}>
+                <ambientLight intensity={0.5} />
+                <pointLight position={[10, 10, 10]} />
+                
+                <EnvironmentMesh environment={environment} />
+                
+                {isActive && frequency > 0 && (
+                  <SoundWave 
+                    frequency={frequency} 
+                    distance={distance} 
+                    environment={environment} 
+                  />
+                )}
+                
+                <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
+              </Canvas>
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                Loading environment...
+              </div>
+            )}
           </div>
 
           {/* معلومات الأداء الصوتي */}
