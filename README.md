@@ -4,6 +4,7 @@
 
 **URL**: [https://lovable.dev/projects/90f97840-2a18-42dc-8700-37b926e68be9](https://github.com/Layanm21/sonic-alert-interface.git)
 
+showcase: https://preview--sonic-alert-interface.lovable.app/
 
 **Use your preferred IDE**
 
